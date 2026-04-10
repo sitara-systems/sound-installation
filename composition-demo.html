@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sound Installation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg:#080a0e;
+  --surface:#0d1017;
+  --surface2:#131822;
+  --border:rgba(255,255,255,0.07);
+  --accent:#c8a96e;
+  --accent2:#6eb5c8;
+  --text:#e8e2d9;
+  --dim:rgba(232,226,217,0.45);
+  --dimmer:rgba(232,226,217,0.18);
+  --green:#7ec87e;
+}
+
+html,body{
+  height:100%;width:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Mono',monospace;
+  overflow:hidden;
+  user-select:none;
+  -webkit-user-select:none;
+  cursor:default;
+}
+
+.app{
+  display:grid;
+  grid-template-rows:56px 1fr 160px 72px;
+  height:100vh;width:100vw;
+}
+
+/* ── HEADER ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 44px;
+  border-bottom:1px solid var(--border);
+  background:rgba(8,10,14,0.96);
+  z-index:20;flex-shrink:0;
+}
+.logo{
+  font-family:'Cormorant Garamond',serif;
+  font-size:18px;letter-spacing:0.35em;text-transform:uppercase;
+  color:var(--accent);font-weight:300;
+}
+.header-center{
+  display:flex;align-items:center;gap:12px;
+  font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);
+}
+.phase-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--accent);animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.2}}
+.header-right{display:flex;align-items:center;gap:22px;}
+.viz-bars{display:flex;align-items:flex-end;gap:3px;height:26px;}
+.viz-bar{
+  width:3px;background:rgba(200,169,110,0.32);border-radius:1px;
+  animation:vizA linear infinite;transform-origin:bottom;
+}
+@keyframes vizA{0%,100%{transform:scaleY(0.12)}50%{transform:scaleY(1)}}
+.session-timer{
+  font-size:12px;color:var(--dimmer);
+  font-variant-numeric:tabular-nums;min-width:42px;text-align:right;
+}
+
+/* ── MAIN ── */
+main{grid-row:2;position:relative;overflow:hidden;}
+
+/* ── FOOTER ── */
+footer{
+  grid-row:4;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 44px;
+  border-top:1px solid var(--border);
+  background:var(--surface);flex-shrink:0;
+}
+.footer-left{display:flex;align-items:center;gap:20px;}
+.footer-phase{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);}
+.footer-note{font-size:9px;color:var(--dimmer);letter-spacing:0.08em;}
+.nav-btns{display:flex;gap:10px;}
+
+.btn{
+  padding:16px 32px;
+  background:var(--accent);color:#080a0e;
+  border:none;border-radius:2px;
+  font-family:'DM Mono',monospace;font-size:11px;
+  letter-spacing:0.14em;text-transform:uppercase;
+  cursor:pointer;transition:opacity 0.15s,transform 0.1s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:hover{opacity:0.8;}
+.btn:active{transform:scale(0.97);}
+.btn-ghost{
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.1);color:var(--dim);
+}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.22);opacity:1;}
+
+/* ── SCREENS ── */
+.screen{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.7s ease;
+}
+.screen.active{opacity:1;pointer-events:all;}
+
+/* ════  IDLE  ════ */
+#screen-idle{
+  background:radial-gradient(ellipse at 50% 55%,rgba(200,169,110,0.05) 0%,transparent 65%);
+}
+.ambient-lines{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.ambient-line{
+  position:absolute;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(200,169,110,0.11),transparent);
+  animation:scan linear infinite;
+}
+@keyframes scan{
+  0%{transform:translateY(-2px);opacity:0}
+  8%{opacity:1}92%{opacity:1}
+  100%{transform:translateY(100vh);opacity:0}
+}
+.idle-inner{position:relative;z-index:1;text-align:center;}
+.idle-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(72px,9vw,124px);
+  font-weight:300;letter-spacing:0.2em;
+  color:var(--text);line-height:1;margin-bottom:16px;
+}
+.idle-subtitle{
+  font-size:11px;letter-spacing:0.24em;color:var(--dimmer);
+  text-transform:uppercase;margin-bottom:80px;
+}
+.idle-prompt{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(22px,2.6vw,32px);font-style:italic;
+  color:var(--accent);margin-bottom:52px;
+}
+.idle-hint{
+  font-size:11px;letter-spacing:0.18em;color:var(--dimmer);
+  text-transform:uppercase;
+  animation:float 3s ease-in-out infinite;
+}
+@keyframes float{
+  0%,100%{transform:translateY(0);opacity:0.2}
+  50%{transform:translateY(-6px);opacity:0.5}
+}
+
+/* ════  DIALOGUE  ════ */
+#screen-dialogue{
+  justify-content:flex-end;align-items:stretch;
+}
+.dialogue-wrap{
+  display:flex;flex-direction:column;
+  height:100%;max-width:860px;margin:0 auto;width:100%;
+  padding:44px 44px 28px;
+}
+.dialogue-history{
+  flex:1;display:flex;flex-direction:column;
+  justify-content:flex-end;gap:24px;
+  overflow:hidden;padding-bottom:18px;
+}
+.msg{display:flex;flex-direction:column;gap:5px;}
+.msg-label{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--dimmer);}
+.msg-bubble{
+  padding:20px 24px;border-radius:2px;
+  font-size:15px;line-height:1.68;max-width:88%;
+}
+.msg-ai .msg-label{color:var(--accent);}
+.msg-ai .msg-bubble{
+  background:rgba(200,169,110,0.06);
+  border:1px solid rgba(200,169,110,0.14);
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(19px,2vw,25px);
+}
+.msg-visitor .msg-label{text-align:right;}
+.msg-visitor .msg-bubble{
+  background:var(--surface2);border:1px solid var(--border);
+  align-self:flex-end;margin-left:auto;
+}
+.dialogue-input-area{display:flex;flex-direction:column;gap:14px;flex-shrink:0;}
+.quick-replies{display:flex;gap:10px;flex-wrap:wrap;}
+.quick-reply{
+  padding:14px 22px;
+  background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:2px;
+  color:var(--dim);font-family:'DM Mono',monospace;
+  font-size:13px;letter-spacing:0.07em;cursor:pointer;
+  transition:all 0.18s;-webkit-tap-highlight-color:transparent;
+}
+.quick-reply:hover,.quick-reply:active{
+  border-color:rgba(200,169,110,0.45);color:var(--accent);
+  background:rgba(200,169,110,0.04);
+}
+.dialogue-input-row{display:flex;gap:10px;}
+.dialogue-input{
+  flex:1;background:var(--surface2);border:1px solid var(--border);
+  border-radius:2px;color:var(--text);
+  font-family:'DM Mono',monospace;font-size:15px;
+  padding:18px 22px;outline:none;
+  transition:border-color 0.2s;
+  user-select:text;-webkit-user-select:text;cursor:text;
+}
+.dialogue-input:focus{border-color:rgba(200,169,110,0.35);}
+.dialogue-input::placeholder{color:var(--dimmer);}
+.char-counter{font-size:9px;color:var(--dimmer);letter-spacing:0.1em;text-align:right;}
+.typing-indicator{
+  display:flex;gap:5px;align-items:center;padding:8px 0;
+  opacity:0;transition:opacity 0.3s;
+}
+.typing-indicator.visible{opacity:1;}
+.typing-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+  animation:typB 1s infinite;
+}
+.typing-dot:nth-child(2){animation-delay:0.16s;}
+.typing-dot:nth-child(3){animation-delay:0.32s;}
+@keyframes typB{0%,100%{transform:translateY(0);opacity:0.25}50%{transform:translateY(-5px);opacity:1}}
+
+/* ════  COMPOSITION  ════ */
+#screen-composition{
+  justify-content:flex-start;align-items:stretch;
+  padding:24px 38px 16px;
+}
+.comp-top{
+  display:flex;flex-direction:column;align-items:center;
+  flex-shrink:0;margin-bottom:18px;
+}
+.comp-narration{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(20px,2.6vw,32px);font-style:italic;
+  color:var(--accent);text-align:center;
+  line-height:1.5;min-height:80px;max-width:860px;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity 0.5s;
+}
+/* stem status row: 4 small cards above the faders */
+.comp-stems{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:12px;width:100%;margin-bottom:14px;flex-shrink:0;
+}
+.stem-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:2px;padding:14px 14px 12px;
+  display:flex;flex-direction:column;gap:10px;
+  transition:all 0.6s ease;opacity:0.25;
+}
+.stem-card.active{
+  opacity:1;border-color:rgba(200,169,110,0.35);
+  background:rgba(200,169,110,0.04);
+}
+.stem-card.done{opacity:1;border-color:rgba(126,200,126,0.25);}
+.stem-name{font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--dimmer);}
+.stem-card.active .stem-name{color:var(--accent);}
+.stem-card.done .stem-name{color:var(--green);}
+.stem-level-bar{height:3px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden;}
+.stem-level-fill{
+  height:100%;background:var(--accent);width:0%;
+  transition:width 2.4s cubic-bezier(0.4,0,0.2,1);border-radius:2px;
+}
+.stem-card.done .stem-level-fill{background:var(--green);}
+.stem-params{display:flex;flex-direction:column;gap:4px;}
+.stem-param{display:flex;justify-content:space-between;font-size:9px;color:var(--dimmer);}
+.stem-param-val{color:var(--dim);font-variant-numeric:tabular-nums;}
+
+
+
+/* ── READY OVERLAY (shown when composition finishes) ── */
+#comp-ready-overlay{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:28px;
+  background:rgba(8,10,14,0.78);
+  backdrop-filter:blur(6px);
+  opacity:0;pointer-events:none;
+  transition:opacity 0.7s ease;
+  z-index:10;
+}
+#comp-ready-overlay.visible{opacity:1;pointer-events:all;}
+.ready-label{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(24px,3.5vw,42px);
+  font-style:italic;font-weight:300;
+  color:var(--text);text-align:center;line-height:1.4;
+}
+.ready-label span{color:var(--accent);}
+.btn-ready{
+  padding:22px 64px;
+  background:var(--accent);color:#080a0e;
+  border:none;border-radius:2px;
+  font-family:'DM Mono',monospace;
+  font-size:13px;letter-spacing:0.18em;text-transform:uppercase;
+  cursor:pointer;
+  transition:opacity 0.15s,transform 0.12s;
+  box-shadow:0 0 60px rgba(200,169,110,0.25);
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-ready:hover{opacity:0.82;}
+.btn-ready:active{transform:scale(0.97);}
+
+/* ════  FREE PLAY  ════ */
+#screen-freeplay{
+  justify-content:center;align-items:stretch;
+  padding:28px 38px;
+}
+.fp-top{
+  display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:center;margin-bottom:22px;flex-shrink:0;gap:20px;
+}
+.fp-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(17px,2vw,24px);font-weight:300;font-style:italic;
+  color:var(--accent);
+}
+.match-block{text-align:center;}
+.match-score-big{
+  font-size:clamp(40px,5.5vw,64px);color:var(--text);
+  font-weight:300;line-height:1;font-variant-numeric:tabular-nums;
+  display:inline-flex;align-items:baseline;gap:7px;
+}
+.match-pct{font-size:17px;color:var(--dim);}
+.match-bar{height:3px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden;margin-top:8px;}
+.match-bar-fill{
+  height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));
+  border-radius:2px;transition:width 0.6s ease;
+}
+.match-sublabel{font-size:9px;color:var(--dimmer);margin-top:6px;letter-spacing:0.1em;}
+.fp-hint{font-size:9px;color:var(--dimmer);letter-spacing:0.12em;text-align:right;text-transform:uppercase;line-height:1.6;}
+/* ── PERSISTENT FADER STRIP ── */
+#fader-strip{
+  grid-row:3;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  padding:10px 38px 0;
+  border-top:1px solid var(--border);
+  background:var(--surface);
+  overflow:hidden;
+}
+.fader-bank{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:2px;padding:10px 10px 8px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.bank-label{
+  font-size:9px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--dimmer);text-align:center;
+  padding-bottom:6px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.faders-row{
+  display:flex;gap:4px;flex:1;
+  align-items:flex-end;justify-content:center;min-height:0;
+}
+.fader-col{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:0;}
+.fader-lbl{
+  font-size:7px;color:var(--dimmer);text-align:center;
+  line-height:1.2;height:16px;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.fader-track{
+  position:relative;width:100%;max-width:20px;
+  height:80px;
+  background:rgba(255,255,255,0.07);border-radius:2px;cursor:pointer;
+}
+.fader-target-line{
+  position:absolute;left:0;right:0;height:2px;
+  background:rgba(200,169,110,0.22);border-radius:1px;pointer-events:none;
+  transform:translateY(50%);
+}
+.fader-fill{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(180deg,var(--accent2) 0%,rgba(110,181,200,0.28) 100%);
+  border-radius:2px;
+}
+.fader-thumb{
+  position:absolute;left:50%;transform:translateX(-50%);
+  width:calc(100% + 10px);height:11px;
+  background:var(--text);border-radius:2px;cursor:grab;
+  box-shadow:0 2px 8px rgba(0,0,0,0.6);
+  touch-action:none;
+}
+.fader-thumb.drift{background:rgba(200,169,110,0.5);}
+/* locked = during composition, faders not interactive */
+#fader-strip.locked .fader-thumb{cursor:default;}
+
+/* ── UTILS ── */
+.fade-in{animation:fadeIn 0.4s ease forwards;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── UNLOCK OVERLAY ── */
+#audio-unlock{
+  position:fixed;inset:0;z-index:100;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:24px;cursor:pointer;
+}
+#audio-unlock h1{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(48px,6vw,80px);font-weight:300;letter-spacing:0.22em;
+  color:var(--text);
+}
+#audio-unlock p{font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--dimmer);animation:float 3s ease-in-out infinite;}
+</style>
+</head>
+<body>
+
+<div id="audio-unlock">
+  <h1>Sound Installation</h1>
+  <p>Touch to begin</p>
+</div>
+
+<div class="app" id="app" style="visibility:hidden">
+
+  <header>
+    <div class="logo">Sound Installation</div>
+    <div class="header-center">
+      <div class="phase-dot"></div>
+      <span id="phase-label">Idle</span>
+    </div>
+    <div class="header-right">
+      <div class="viz-bars" id="viz-bars"></div>
+      <div class="session-timer" id="session-timer">—:——</div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- IDLE -->
+    <div class="screen active" id="screen-idle">
+      <div class="ambient-lines" id="ambient-lines"></div>
+      <div class="idle-inner">
+        <div class="idle-title">Sound Installation</div>
+        <div class="idle-subtitle">An Interactive Music Installation</div>
+        <div class="idle-prompt">"What do you want to hear today?"</div>
+        <div class="idle-hint">touch anywhere to begin</div>
+      </div>
+    </div>
+
+    <!-- DIALOGUE -->
+    <div class="screen" id="screen-dialogue">
+      <div class="dialogue-wrap">
+        <div class="dialogue-history" id="dialogue-history"></div>
+        <div class="dialogue-input-area">
+          <div class="quick-replies" id="quick-replies"></div>
+          <div class="dialogue-input-row">
+            <input class="dialogue-input" id="dialogue-input" type="text"
+              placeholder="Or type your own…" maxlength="200" autocomplete="off">
+            <button class="btn" id="dialogue-send">Send</button>
+          </div>
+          <div class="char-counter" id="char-counter">0 / 200</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPOSITION -->
+    <div class="screen" id="screen-composition">
+      <!-- ready overlay: centered CTA after build completes -->
+      <div id="comp-ready-overlay">
+        <div class="ready-label">Your composition is <span>ready.</span></div>
+        <button class="btn-ready" id="btn-enter-freeplay">Enter Free Play →</button>
+      </div>
+
+      <div class="comp-top">
+        <div class="comp-narration" id="comp-narration"></div>
+      </div>
+
+      <div class="comp-stems">
+        <div class="stem-card" id="stem-drums">
+          <div class="stem-name">Drums</div>
+          <div class="stem-level-bar"><div class="stem-level-fill" id="stem-fill-drums"></div></div>
+          <div class="stem-params">
+            <div class="stem-param"><span>Density</span><span class="stem-param-val" id="sp-drums-density">—</span></div>
+            <div class="stem-param"><span>Swing</span><span class="stem-param-val" id="sp-drums-swing">—</span></div>
+            <div class="stem-param"><span>Reverb</span><span class="stem-param-val" id="sp-drums-reverb">—</span></div>
+          </div>
+        </div>
+        <div class="stem-card" id="stem-bass">
+          <div class="stem-name">Bass</div>
+          <div class="stem-level-bar"><div class="stem-level-fill" id="stem-fill-bass"></div></div>
+          <div class="stem-params">
+            <div class="stem-param"><span>Sub Level</span><span class="stem-param-val" id="sp-bass-sub">—</span></div>
+            <div class="stem-param"><span>Drive</span><span class="stem-param-val" id="sp-bass-drive">—</span></div>
+            <div class="stem-param"><span>Filter</span><span class="stem-param-val" id="sp-bass-filter">—</span></div>
+          </div>
+        </div>
+        <div class="stem-card" id="stem-melody">
+          <div class="stem-name">Melody</div>
+          <div class="stem-level-bar"><div class="stem-level-fill" id="stem-fill-melody"></div></div>
+          <div class="stem-params">
+            <div class="stem-param"><span>Delay</span><span class="stem-param-val" id="sp-melody-delay">—</span></div>
+            <div class="stem-param"><span>Vibrato</span><span class="stem-param-val" id="sp-melody-vibrato">—</span></div>
+            <div class="stem-param"><span>Bright</span><span class="stem-param-val" id="sp-melody-bright">—</span></div>
+          </div>
+        </div>
+        <div class="stem-card" id="stem-pads">
+          <div class="stem-name">Pads</div>
+          <div class="stem-level-bar"><div class="stem-level-fill" id="stem-fill-pads"></div></div>
+          <div class="stem-params">
+            <div class="stem-param"><span>Reverb</span><span class="stem-param-val" id="sp-pads-reverb">—</span></div>
+            <div class="stem-param"><span>Mod Rate</span><span class="stem-param-val" id="sp-pads-mod">—</span></div>
+            <div class="stem-param"><span>Width</span><span class="stem-param-val" id="sp-pads-width">—</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FREE PLAY -->
+    <div class="screen" id="screen-freeplay">
+      <div class="fp-top">
+        <div class="fp-title">"This is your piece now."</div>
+        <div class="match-block">
+          <div class="match-score-big">
+            <span id="match-num">100</span><span class="match-pct">%</span>
+          </div>
+          <div class="match-bar"><div class="match-bar-fill" id="match-bar-fill" style="width:100%"></div></div>
+          <div class="match-sublabel" id="match-sublabel">Match with AI composition</div>
+        </div>
+        <div class="fp-hint">Move faders freely<br>AI drifts gently back</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- PERSISTENT FADER STRIP — always visible on every screen -->
+  <div id="fader-strip"></div>
+
+  <footer>
+    <div class="footer-left">
+      <div class="footer-phase" id="footer-phase">Phase: IDLE</div>
+      <div class="footer-note">Prototype · For approval review</div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn btn-ghost" id="btn-back" style="display:none">← Back</button>
+      <button class="btn btn-ghost" id="btn-reset">Reset</button>
+      <button class="btn" id="btn-next">Begin →</button>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  WEB AUDIO ENGINE
+// ═══════════════════════════════════════════════════
+let AC, masterGain, reverbBus;
+const stemNodes = {};
+
+function initAudio() {
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+
+  masterGain = AC.createGain();
+  masterGain.gain.setValueAtTime(0.01, AC.currentTime);
+  masterGain.gain.linearRampToValueAtTime(0.7, AC.currentTime + 1.8);
+  masterGain.connect(AC.destination);
+
+  // Simple reverb via feedback delay network
+  reverbBus = AC.createGain();
+  reverbBus.gain.value = 0.2;
+  const rg = AC.createGain(); rg.gain.value = 0.42;
+  const d1 = AC.createDelay(2); d1.delayTime.value = 0.41;
+  const d2 = AC.createDelay(2); d2.delayTime.value = 0.61;
+  reverbBus.connect(d1); reverbBus.connect(d2);
+  d1.connect(rg); d2.connect(rg);
+  rg.connect(d1); rg.connect(d2);
+  rg.connect(masterGain);
+
+  buildDrums();
+  buildBass();
+  buildMelody();
+  buildPads();
+
+  // idle: soft pad drone
+  stemNodes.pads.startPad('slow');
+  rampGain('pads', 0.07, 1.5);
+}
+
+// ── DRUMS ──────────────────────────────────────────
+function buildDrums() {
+  const gn = AC.createGain(); gn.gain.value = 0;
+  gn.connect(masterGain); gn.connect(reverbBus);
+  let kickT = null, hatT = null;
+
+  function kick() {
+    const t = AC.currentTime;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.connect(g); g.connect(gn);
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(34, t + 0.2);
+    g.gain.setValueAtTime(1.5, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o.start(t); o.stop(t + 0.38);
+  }
+
+  function hat() {
+    const t = AC.currentTime;
+    const len = AC.sampleRate * 0.045;
+    const buf = AC.createBuffer(1, len, AC.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = AC.createBufferSource(); src.buffer = buf;
+    const f = AC.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 7500;
+    const g = AC.createGain();
+    src.connect(f); f.connect(g); g.connect(gn);
+    g.gain.setValueAtTime(0.28, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.065);
+    src.start(t);
+  }
+
+  function startBeat(bpm, density) {
+    stopBeat();
+    const iv = (60 / (bpm || 80)) * 1000;
+    kick();
+    kickT = setInterval(() => kick(), iv * 2);
+    if (density > 0.5) { hat(); hatT = setInterval(() => hat(), iv / 2); }
+  }
+  function stopBeat() {
+    if (kickT) { clearInterval(kickT); kickT = null; }
+    if (hatT) { clearInterval(hatT); hatT = null; }
+  }
+
+  stemNodes.drums = { gn, startBeat, stopBeat };
+}
+
+// ── BASS ──────────────────────────────────────────
+function buildBass() {
+  const gn = AC.createGain(); gn.gain.value = 0;
+  const filt = AC.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 280;
+  gn.connect(filt); filt.connect(masterGain);
+  const NOTES = { slow:[55, 55, 41.2, 36.7], bright:[110, 123.5, 98, 110] };
+  let ni = null, idx = 0;
+
+  function note(freq, dur) {
+    const t = AC.currentTime;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    o.connect(g); g.connect(gn);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(1.1, t + 0.06);
+    g.gain.setValueAtTime(1.1, t + dur * 0.55);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+
+  function startSeq(mood, bpm) {
+    stopSeq();
+    const ns = NOTES[mood] || NOTES.slow;
+    const bd = 60 / (bpm || 80) * 2;
+    idx = 0; note(ns[0], bd * 0.88);
+    ni = setInterval(() => { idx = (idx + 1) % ns.length; note(ns[idx], bd * 0.88); }, bd * 1000);
+  }
+  function stopSeq() { if (ni) { clearInterval(ni); ni = null; } }
+
+  stemNodes.bass = { gn, startSeq, stopSeq };
+}
+
+// ── MELODY ────────────────────────────────────────
+function buildMelody() {
+  const gn = AC.createGain(); gn.gain.value = 0;
+  const delay = AC.createDelay(1); delay.delayTime.value = 0.36;
+  const dg = AC.createGain(); dg.gain.value = 0.36;
+  gn.connect(masterGain);
+  gn.connect(delay); delay.connect(dg); dg.connect(masterGain);
+  const PENTA = { slow:[220,261.6,329.6,392,440,329.6,261.6], bright:[440,523.3,659.3,784,880,659.3,523.3] };
+  let ai = null, aidx = 0;
+
+  function tone(freq, dur) {
+    const t = AC.currentTime;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = 'triangle'; o.frequency.value = freq;
+    o.connect(g); g.connect(gn);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.52, t + 0.04);
+    g.gain.setValueAtTime(0.52, t + dur * 0.5);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+
+  function startArp(mood, bpm) {
+    stopArp();
+    const ns = PENTA[mood] || PENTA.slow;
+    const step = (60 / (bpm || 80)) * 500;
+    aidx = 0; tone(ns[0], step / 1000 * 0.82);
+    ai = setInterval(() => { aidx = (aidx + 1) % ns.length; tone(ns[aidx], step / 1000 * 0.82); }, step);
+  }
+  function stopArp() { if (ai) { clearInterval(ai); ai = null; } }
+
+  stemNodes.melody = { gn, startArp, stopArp };
+}
+
+// ── PADS ──────────────────────────────────────────
+function buildPads() {
+  const gn = AC.createGain(); gn.gain.value = 0;
+  gn.connect(masterGain); gn.connect(reverbBus);
+  const CHORDS = { slow:[110,138.6,164.8], bright:[220,277.2,329.6] };
+  const oscs = [];
+
+  function startPad(mood) {
+    stopPad();
+    (CHORDS[mood] || CHORDS.slow).forEach((f, i) => {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = 'sine';
+      o.frequency.value = f * (1 + (i - 1) * 0.0028);
+      g.gain.value = 0.4; o.connect(g); g.connect(gn);
+      o.start(); oscs.push(o);
+    });
+  }
+  function stopPad() { oscs.forEach(o => { try { o.stop(); } catch(e){} }); oscs.length = 0; }
+
+  stemNodes.pads = { gn, startPad, stopPad };
+}
+
+// ── GAIN RAMP ────────────────────────────────────
+function rampGain(stem, val, dur) {
+  if (!stemNodes[stem]) return;
+  const g = stemNodes[stem].gn.gain;
+  g.cancelScheduledValues(AC.currentTime);
+  g.setValueAtTime(g.value, AC.currentTime);
+  g.linearRampToValueAtTime(val, AC.currentTime + dur);
+}
+
+// ── UI SOUNDS ─────────────────────────────────────
+function click(freq=880, dur=0.04) {
+  if (!AC) return;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type='sine'; o.frequency.value=freq;
+  o.connect(g); g.connect(masterGain);
+  g.gain.setValueAtTime(0.16, AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+dur);
+  o.start(); o.stop(AC.currentTime+dur+0.01);
+}
+
+let lastTick = 0;
+function faderTick() {
+  if (!AC) return;
+  const now = Date.now();
+  if (now - lastTick < 38) return;
+  lastTick = now;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type='sine'; o.frequency.value = 1100 + Math.random()*500;
+  o.connect(g); g.connect(masterGain);
+  g.gain.setValueAtTime(0.055, AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+0.022);
+  o.start(); o.stop(AC.currentTime+0.025);
+}
+
+// ═══════════════════════════════════════════════════
+//  APP STATE
+// ═══════════════════════════════════════════════════
+let currentPhase = 0;
+let sessionStart = null, sessionTmr = null;
+let compositionData = null;
+let driftInterval = null;
+const faderValues = {}, faderTargets = {};
+
+const dialogueFlow = [
+  { text:'What do you want to hear today?',
+    qr:['Something slow and heavy','Bright and energetic','Melancholic and dark','Chaotic and strange'] },
+  { text:'How much space around the sounds — tight and close, or wide and atmospheric?',
+    qr:['Tight and close','Wide and spacious','Somewhere in between'] }
+];
+let dStep = 0, dWait = false;
+
+const COMP = {
+  slow:{ mood:'Slow + Heavy', space:'Wide', bpm:72, mk:'slow', stems:[
+    {id:'drums', nar:'Starting with the drums — slow, deliberate, each hit suspended in heavy silence.', params:{density:'0.32',swing:'0.67',reverb:'0.81'}, level:72},
+    {id:'bass',  nar:'Bringing in the bass — deep sub frequencies, a gentle drive underneath.',       params:{sub:'0.88',drive:'0.41',filter:'0.29'}, level:85},
+    {id:'melody',nar:'A sparse melody enters — just a few notes, trailing off into long delay.',      params:{delay:'0.74',vibrato:'0.18',bright:'0.45'}, level:48},
+    {id:'pads',  nar:'Finally, the atmosphere — wide and slow-moving, filling all the space between.',params:{reverb:'0.92',mod:'0.21',width:'0.95'}, level:61},
+  ]},
+  bright:{ mood:'Bright + Energetic', space:'Close', bpm:118, mk:'bright', stems:[
+    {id:'drums', nar:'Drums first — tight and punchy, high transients, minimal room.',                params:{density:'0.78',swing:'0.31',reverb:'0.22'}, level:91},
+    {id:'bass',  nar:'A bright, filtered bass line — present and forward in the mix.',               params:{sub:'0.52',drive:'0.61',filter:'0.72'}, level:78},
+    {id:'melody',nar:'The melody cuts through — high and shimmering, vibrato pulling at the edges.', params:{delay:'0.28',vibrato:'0.64',bright:'0.88'}, level:82},
+    {id:'pads',  nar:'Pads sit behind everything — not wide, just present, holding the harmonic centre.',params:{reverb:'0.34',mod:'0.51',width:'0.48'}, level:55},
+  ]}
+};
+
+// ═══════════════════════════════════════════════════
+//  INIT VIZ + AMBIENT
+// ═══════════════════════════════════════════════════
+(function initViz(){
+  const vb = document.getElementById('viz-bars');
+  for (let i=0;i<14;i++){
+    const b=document.createElement('div'); b.className='viz-bar';
+    b.style.height=(7+Math.random()*20)+'px';
+    b.style.animationDuration=(0.5+Math.random()*1.3)+'s';
+    b.style.animationDelay=(Math.random()*1.0)+'s';
+    vb.appendChild(b);
+  }
+  const al = document.getElementById('ambient-lines');
+  for (let i=0;i<7;i++){
+    const l=document.createElement('div'); l.className='ambient-line';
+    l.style.width=(22+Math.random()*48)+'%';
+    l.style.left=(Math.random()*58)+'%';
+    l.style.animationDuration=(8+Math.random()*16)+'s';
+    l.style.animationDelay=(Math.random()*14)+'s';
+    al.appendChild(l);
+  }
+})();
+
+// ═══════════════════════════════════════════════════
+//  FADER BANKS — built into persistent #fader-strip
+// ═══════════════════════════════════════════════════
+const BANKS=[
+  {name:'UF8 #1 — Drums',  id:'drums',  faders:['Density','Swing','Hi/Lo','Reverb','Trans.','Width','Drive','—']},
+  {name:'UF8 #2 — Bass',   id:'bass',   faders:['Sub Lvl','Filter','Drive','Groove','Attack','Width','Reverb','—']},
+  {name:'UF8 #3 — Melody', id:'melody', faders:['Octave','Delay','Vibrato','Bright','Pres.','Reverb','Width','—']},
+  {name:'UF8 #4 — Pads',   id:'pads',   faders:['Rev.Sz','Mod','Width','Harm.','Env.','Bright','Drive','—']},
+];
+const strip = document.getElementById('fader-strip');
+BANKS.forEach(bank=>{
+  const be=document.createElement('div'); be.className='fader-bank';
+  be.innerHTML=`<div class="bank-label">${bank.name}</div><div class="faders-row" id="frows-${bank.id}"></div>`;
+  strip.appendChild(be);
+  const row=be.querySelector('.faders-row');
+  bank.faders.forEach((lbl,i)=>{
+    const key=`${bank.id}_${i}`;
+    faderValues[key]=0;   // start at zero; lerp up during composition
+    faderTargets[key]=0;
+    const col=document.createElement('div'); col.className='fader-col';
+    col.innerHTML=`
+      <div class="fader-lbl">${lbl}</div>
+      <div class="fader-track" id="tr-${key}">
+        <div class="fader-target-line" id="tl-${key}" style="bottom:0%"></div>
+        <div class="fader-fill" id="ff-${key}" style="height:0%"></div>
+        <div class="fader-thumb" id="th-${key}" style="bottom:-5px"></div>
+      </div>`;
+    row.appendChild(col);
+    hookFader(key);
+  });
+});
+
+function hookFader(key){
+  const track=document.getElementById(`tr-${key}`);
+  const thumb=document.getElementById(`th-${key}`);
+  if(!track||!thumb) return;
+  let dragging=false;
+  const getV=e=>{
+    const r=track.getBoundingClientRect();
+    const cy=e.touches?e.touches[0].clientY:e.clientY;
+    return Math.max(0,Math.min(1,1-(cy-r.top)/r.height));
+  };
+  const setF=v=>{
+    if(currentPhase!==3) return; // only interactive in FREE PLAY
+    faderValues[key]=v; showFader(key,v); faderTick();
+    updateMatch(); fpAudio();
+  };
+  thumb.addEventListener('mousedown',e=>{ if(currentPhase!==3) return; dragging=true; e.preventDefault(); });
+  thumb.addEventListener('touchstart',e=>{ if(currentPhase!==3) return; dragging=true; e.preventDefault(); },{passive:false});
+  track.addEventListener('click',e=>{ if(!dragging) setF(getV(e)); });
+  window.addEventListener('mousemove',e=>{ if(dragging) setF(getV(e)); });
+  window.addEventListener('touchmove',e=>{ if(dragging) setF(getV(e)); },{passive:false});
+  window.addEventListener('mouseup',()=>{ dragging=false; });
+  window.addEventListener('touchend',()=>{ dragging=false; });
+}
+
+function showFader(key,v){
+  const ff=document.getElementById(`ff-${key}`);
+  const th=document.getElementById(`th-${key}`);
+  if(ff) ff.style.height=(v*100)+'%';
+  if(th) th.style.bottom=`calc(${v*100}% - 5px)`;
+}
+
+// Lerp all faders to zero over ~1.5s (used on reset)
+let lerpInterval=null;
+function lerpFadersToZero(onDone){
+  if(lerpInterval) clearInterval(lerpInterval);
+  lerpInterval=setInterval(()=>{
+    let allDone=true;
+    Object.keys(faderValues).forEach(key=>{
+      if(faderValues[key]<0.005){ faderValues[key]=0; showFader(key,0); return; }
+      faderValues[key]*=0.82; // exponential decay
+      showFader(key,faderValues[key]);
+      allDone=false;
+    });
+    Object.keys(faderTargets).forEach(k=>{ faderTargets[k]=0; });
+    // also zero target lines
+    Object.keys(faderValues).forEach(key=>{
+      const tl=document.getElementById(`tl-${key}`); if(tl) tl.style.bottom='0%';
+    });
+    if(allDone){ clearInterval(lerpInterval); lerpInterval=null; if(onDone) onDone(); }
+  },30);
+}
+
+// ─── map fader positions → stem audio gains ──────
+function fpAudio(){
+  if(!AC) return;
+  const avg=id=>{let s=0,c=0; for(let i=0;i<8;i++){const v=faderValues[`${id}_${i}`];if(v!==undefined){s+=v;c++;}} return c?s/c:0.5;};
+  if(currentPhase===3){
+    rampGain('drums',  avg('drums')*0.88, 0.12);
+    rampGain('bass',   avg('bass') *0.82, 0.12);
+    rampGain('melody', avg('melody')*0.68, 0.12);
+    rampGain('pads',   avg('pads') *0.62, 0.12);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  MATCH SCORE
+// ═══════════════════════════════════════════════════
+function updateMatch(){
+  const keys=Object.keys(faderValues);
+  let tot=0; keys.forEach(k=>tot+=Math.abs(faderValues[k]-faderTargets[k]));
+  const pct=Math.round(Math.max(0,Math.min(1,1-tot/keys.length*2.4))*100);
+  const n=document.getElementById('match-num'), b=document.getElementById('match-bar-fill'), l=document.getElementById('match-sublabel');
+  if(n) n.textContent=pct;
+  if(b) b.style.width=pct+'%';
+  if(l) l.textContent=pct>88?'Perfectly matched to AI composition':pct>65?'AI drifting gently back toward target…':"You've moved far from the AI's vision";
+}
+
+// ═══════════════════════════════════════════════════
+//  DRIFT
+// ═══════════════════════════════════════════════════
+function startDrift(){
+  if(driftInterval) clearInterval(driftInterval);
+  driftInterval=setInterval(()=>{
+    let moved=false;
+    Object.keys(faderValues).forEach(key=>{
+      const d=(faderTargets[key]-faderValues[key])*0.011;
+      if(Math.abs(d)<0.0003) return;
+      faderValues[key]+=d; showFader(key,faderValues[key]);
+      const th=document.getElementById(`th-${key}`);
+      if(th&&Math.abs(d)>0.002){ th.classList.add('drift'); setTimeout(()=>th&&th.classList.remove('drift'),650); }
+      moved=true;
+    });
+    if(moved){ updateMatch(); fpAudio(); }
+  },130);
+}
+
+// ═══════════════════════════════════════════════════
+//  PHASE
+// ═══════════════════════════════════════════════════
+function goTo(idx){
+  const PL=['IDLE','DIALOGUE','COMPOSITION','FREE PLAY'];
+  const FL=['Phase: IDLE','Phase: DIALOGUE','Phase: COMPOSITION','Phase: FREE PLAY'];
+  const NL=['Begin →','Next →','',''];
+  const BV=[false,true,true,true];
+
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const SID=['screen-idle','screen-dialogue','screen-composition','screen-freeplay'];
+  const sc=document.getElementById(SID[idx]); if(sc) sc.classList.add('active');
+
+  document.getElementById('phase-label').textContent=PL[idx];
+  document.getElementById('footer-phase').textContent=FL[idx];
+  const bn=document.getElementById('btn-next');
+  // btn-next only shows on idle and dialogue in the footer
+  bn.textContent=NL[idx];
+  bn.style.display=(idx===0||idx===1)?'':'none';
+  document.getElementById('btn-back').style.display=BV[idx]?'':'none';
+
+  // Hide ready overlay when leaving composition
+  if(idx!==2) hideCompReady();
+
+  if(idx===1&&!sessionStart){
+    sessionStart=Date.now();
+    sessionTmr=setInterval(()=>{
+      const e=Math.floor((Date.now()-sessionStart)/1000);
+      document.getElementById('session-timer').textContent=`${Math.floor(e/60)}:${(e%60).toString().padStart(2,'0')}`;
+    },1000);
+  }
+  if(idx===0){
+    sessionStart=null; if(sessionTmr){clearInterval(sessionTmr);sessionTmr=null;}
+    document.getElementById('session-timer').textContent='—:——';
+  }
+
+  // Audio transitions
+  if(AC){
+    if(idx===0){
+      // audio teardown handled by reset button; just ensure pads are low
+      rampGain('pads',0.07,1.0);
+    }
+    if(idx===1) rampGain('pads',0.05,1.0);
+    if(idx===3){ startDrift(); fpAudio(); }
+  }
+  if(idx!==3&&driftInterval){ clearInterval(driftInterval); driftInterval=null; }
+
+  // Strip interactivity — only free play allows touching
+  const strip=document.getElementById('fader-strip');
+  if(idx===3) strip.classList.remove('locked');
+  else if(idx!==2) strip.classList.add('locked'); // comp phase manages its own lock
+
+  currentPhase=idx;
+}
+
+// ═══════════════════════════════════════════════════
+//  DIALOGUE
+// ═══════════════════════════════════════════════════
+function setupDialogue(){
+  dStep=0; dWait=false;
+  document.getElementById('dialogue-history').innerHTML='';
+  document.getElementById('dialogue-input').value='';
+  document.getElementById('char-counter').textContent='0 / 200';
+  showAI();
+}
+
+function showAI(){
+  if(dStep>=dialogueFlow.length) return;
+  const step=dialogueFlow[dStep];
+  const hist=document.getElementById('dialogue-history');
+  const typ=document.createElement('div'); typ.className='typing-indicator visible';
+  typ.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  hist.appendChild(typ); hist.scrollTop=hist.scrollHeight;
+  setTimeout(()=>{
+    try{hist.removeChild(typ);}catch(e){}
+    addMsg('ai',step.text);
+    const qr=document.getElementById('quick-replies'); qr.innerHTML='';
+    step.qr.forEach(r=>{
+      const b=document.createElement('button'); b.className='quick-reply'; b.textContent=r;
+      b.onclick=()=>{ click(640,0.05); submitReply(r); };
+      qr.appendChild(b);
+    });
+    dWait=true;
+  }, 700+Math.random()*400);
+}
+
+function addMsg(who,text){
+  const hist=document.getElementById('dialogue-history');
+  const m=document.createElement('div'); m.className=`msg msg-${who} fade-in`;
+  m.innerHTML=`<div class="msg-label">${who==='ai'?'Composition AI':'You'}</div><div class="msg-bubble">${text}</div>`;
+  hist.appendChild(m); hist.scrollTop=hist.scrollHeight;
+}
+
+function submitReply(text){
+  if(!text.trim()||!dWait) return;
+  dWait=false;
+  addMsg('visitor',text);
+  document.getElementById('dialogue-input').value='';
+  document.getElementById('char-counter').textContent='0 / 200';
+  document.getElementById('quick-replies').innerHTML='';
+
+  if(dStep===0){
+    const slow=/slow|heavy|dark|calm|melancholic|sad|quiet|strange|chaos/i.test(text);
+    compositionData=COMP[slow?'slow':'bright'];
+    if(AC){ stemNodes.pads.stopPad(); stemNodes.pads.startPad(compositionData.mk); rampGain('pads',0.08,1.0); }
+  }
+
+  dStep++;
+  if(dStep>=dialogueFlow.length){
+    setTimeout(()=>{
+      addMsg('ai','Perfect. Let me compose something for you…');
+      setTimeout(()=>{ goTo(2); startComp(); }, 1900);
+    },450);
+  } else {
+    setTimeout(showAI, 520);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  COMPOSITION
+// ═══════════════════════════════════════════════════
+function showCompReady(){
+  document.getElementById('comp-ready-overlay').classList.add('visible');
+}
+function hideCompReady(){
+  document.getElementById('comp-ready-overlay').classList.remove('visible');
+}
+
+// Smoothly lerp a single fader from its current value to targetVal.
+// startDelay staggers the reveal across the 8 faders in a bank.
+function lerpFaderTo(key, targetVal, startDelay){
+  setTimeout(()=>{
+    const duration = 900; // ms for full travel
+    const startVal = faderValues[key];
+    const startTime = performance.now();
+
+    // Update the target-line immediately so it's visible before the fader arrives
+    const tl = document.getElementById(`tl-${key}`);
+    if(tl) tl.style.bottom = (targetVal*100)+'%';
+
+    function step(now){
+      const t = Math.min((now - startTime) / duration, 1);
+      // ease-out cubic
+      const ease = 1 - Math.pow(1 - t, 3);
+      const val = startVal + (targetVal - startVal) * ease;
+      faderValues[key] = val;
+      showFader(key, val);
+      if(t < 1) requestAnimationFrame(step);
+      else { faderValues[key] = targetVal; showFader(key, targetVal); }
+    }
+    requestAnimationFrame(step);
+  }, startDelay);
+}
+
+function resetCompFaders(){
+  // faders are reset via lerpFadersToZero on full reset; this just zeros targets
+  BANKS.forEach(b=>{
+    for(let f=0;f<8;f++){
+      const key=`${b.id}_${f}`;
+      faderTargets[key]=0;
+      const tl=document.getElementById(`tl-${key}`); if(tl) tl.style.bottom='0%';
+    }
+  });
+}
+
+function startComp(){
+  hideCompReady();
+  document.getElementById('fader-strip').classList.add('locked');
+  const comp=compositionData||COMP.slow;
+  const nar=document.getElementById('comp-narration');
+  nar.textContent=''; nar.style.opacity=1;
+  document.querySelectorAll('.stem-card').forEach(c=>c.classList.remove('active','done'));
+
+  resetCompFaders();
+
+  let i=0;
+  function next(){
+    if(i>=comp.stems.length){
+      setTimeout(()=>{
+        nar.style.opacity=0;
+        setTimeout(()=>{
+          nar.style.opacity=1;
+          nar.innerHTML='<em style="color:var(--dim)">All stems placed. The composition is yours.</em>';
+          document.getElementById('fader-strip').classList.remove('locked');
+          showCompReady();
+        },400);
+      },900);
+      return;
+    }
+
+    const stem=comp.stems[i];
+    const card=document.getElementById(`stem-${stem.id}`);
+    const fill=document.getElementById(`stem-fill-${stem.id}`);
+    document.querySelectorAll('.stem-card').forEach(c=>c.classList.remove('active'));
+    card.classList.add('active');
+    click(400+(i*100), 0.09);
+
+    nar.style.opacity=0;
+    setTimeout(()=>{ nar.textContent=`"${stem.nar}"`; nar.style.opacity=1; },320);
+    setTimeout(()=>{ fill.style.width=stem.level+'%'; },720);
+    setTimeout(()=>{
+      const $=id=>document.getElementById(id);
+      if(stem.id==='drums'){$('sp-drums-density').textContent=stem.params.density;$('sp-drums-swing').textContent=stem.params.swing;$('sp-drums-reverb').textContent=stem.params.reverb;}
+      else if(stem.id==='bass'){$('sp-bass-sub').textContent=stem.params.sub;$('sp-bass-drive').textContent=stem.params.drive;$('sp-bass-filter').textContent=stem.params.filter;}
+      else if(stem.id==='melody'){$('sp-melody-delay').textContent=stem.params.delay;$('sp-melody-vibrato').textContent=stem.params.vibrato;$('sp-melody-bright').textContent=stem.params.bright;}
+      else if(stem.id==='pads'){$('sp-pads-reverb').textContent=stem.params.reverb;$('sp-pads-mod').textContent=stem.params.mod;$('sp-pads-width').textContent=stem.params.width;}
+    },1400);
+
+    // Lerp faders for this stem upward, staggered across the 8 channels
+    const pv=Object.values(stem.params).map(Number);
+    for(let f=0;f<8;f++){
+      const key=`${stem.id}_${f}`;
+      faderTargets[key]=pv[f%pv.length]||0.5;
+      lerpFaderTo(key, faderTargets[key], 600 + f*80);
+    }
+
+    // Audio: bring stem in
+    if(AC){
+      if(stem.id==='drums'){ stemNodes.drums.startBeat(comp.bpm,parseFloat(stem.params.density)); rampGain('drums',0.75,1.6); }
+      if(stem.id==='bass') { stemNodes.bass.startSeq(comp.mk,comp.bpm); rampGain('bass',0.58,1.6); }
+      if(stem.id==='melody'){ stemNodes.melody.startArp(comp.mk,comp.bpm); rampGain('melody',0.42,1.8); }
+      if(stem.id==='pads')  { rampGain('pads',0.38,2.2); }
+    }
+
+    setTimeout(()=>{ card.classList.remove('active'); card.classList.add('done'); i++; setTimeout(next,500); }, 3500);
+  }
+  setTimeout(next,600);
+}
+
+// ═══════════════════════════════════════════════════
+//  INPUT WIRING
+// ═══════════════════════════════════════════════════
+document.getElementById('dialogue-input').addEventListener('input',e=>{
+  document.getElementById('char-counter').textContent=`${e.target.value.length} / 200`;
+});
+document.getElementById('dialogue-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ click(640,0.05); submitReply(e.target.value); }
+});
+document.getElementById('dialogue-send').addEventListener('click',()=>{ click(640,0.05); submitReply(document.getElementById('dialogue-input').value); });
+
+document.getElementById('btn-enter-freeplay').addEventListener('click',()=>{
+  click(750,0.06);
+  goTo(3);
+});
+
+document.getElementById('btn-next').addEventListener('click',()=>{
+  click(750,0.06);
+  // btn-next only appears on idle (→dialogue) and dialogue (manual skip)
+  if(currentPhase===0){ goTo(1); setupDialogue(); }
+  else if(currentPhase===1){ goTo(2); startComp(); }
+});
+document.getElementById('btn-back').addEventListener('click',()=>{ click(520,0.05); if(currentPhase>0) goTo(currentPhase-1); });
+document.getElementById('btn-reset').addEventListener('click',()=>{
+  click(420,0.07);
+  if(driftInterval){ clearInterval(driftInterval); driftInterval=null; }
+  if(lerpInterval){ clearInterval(lerpInterval); lerpInterval=null; }
+  compositionData=null;
+  document.getElementById('fader-strip').classList.remove('locked');
+  hideCompReady();
+  // Stop all audio stems
+  if(AC){
+    stemNodes.drums.stopBeat(); stemNodes.bass.stopSeq(); stemNodes.melody.stopArp(); stemNodes.pads.stopPad();
+    rampGain('drums',0,0.4); rampGain('bass',0,0.4); rampGain('melody',0,0.4); rampGain('pads',0,0.4);
+  }
+  // Lerp faders to zero, then go to idle
+  lerpFadersToZero(()=>{
+    if(AC){ stemNodes.pads.startPad('slow'); rampGain('pads',0.07,1.6); }
+  });
+  goTo(0);
+});
+document.getElementById('screen-idle').addEventListener('click',()=>{ click(640,0.05); goTo(1); setupDialogue(); });
+
+// ═══════════════════════════════════════════════════
+//  UNLOCK
+// ═══════════════════════════════════════════════════
+document.getElementById('audio-unlock').addEventListener('click',()=>{
+  document.getElementById('audio-unlock').style.display='none';
+  document.getElementById('app').style.visibility='visible';
+  initAudio();
+  goTo(0);
+},{once:true});
+</script>
+</body>
+</html>
